@@ -18,7 +18,7 @@ jobs:
 
       - name: 运行 ImmortalWrt 构建脚本
         run: |
-          echo "开始构建 ImmortalWrt..."
+          echo "开始构建 ImmortalWrt...大约需要8分钟作用..."
           ./docker-run.sh
           echo "构建流程执行完成"
 
