@@ -22,7 +22,7 @@ jobs:
           ./docker-run.sh
           echo "构建流程执行完成"
 
-      - name: 打包 bin 目录
+      - name: 打包所有固件
         run: |
           if [ ! -d "bin" ]; then
             echo "错误：未找到 bin 目录，请检查 docker-run.sh 是否正确输出"
