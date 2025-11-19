@@ -40,6 +40,7 @@ jobs:
           body: |
             ### 加速下载
             - [Github文件加速](https://yishijie.gitlab.io/ziyuan/)
+            
           files: immortalwrt-bin.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
