@@ -1,0 +1,47 @@
+name: Build ImmortalWrt
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 检查 Docker 环境
+        run: |
+          echo "检查 Docker 环境..."
+          docker --version
+          docker info
+          echo "Docker 已准备就绪"
+
+      - name: 增加脚本执行权限
+        run: chmod +x docker-run.sh
+
+      - name: 运行 ImmortalWrt 构建脚本
+        run: |
+          echo "开始构建 ImmortalWrt..."
+          ./docker-run.sh
+          echo "构建流程执行完成"
+
+      - name: 打包 bin 目录
+        run: |
+          if [ ! -d "bin" ]; then
+            echo "错误：未找到 bin 目录，请检查 docker-run.sh 是否正确输出"
+            exit 1
+          fi
+          echo "压缩 bin 目录..."
+          zip -r immortalwrt-bin.zip bin
+          echo "压缩完成：immortalwrt-bin.zip"
+
+      - name: 上传到 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          name: ImmortalWrt 自动构建
+          files: immortalwrt-bin.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
