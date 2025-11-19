@@ -10,3 +10,5 @@ docker run --rm -i \
 -v ./files/etc/uci-defaults:/home/build/immortalwrt/files/etc/uci-defaults \
 -v ./build.sh:/home/build/immortalwrt/build.sh \
 immortalwrt/imagebuilder:x86-64-openwrt-24.10.4 /home/build/immortalwrt/build.sh
+
+# https://hub.docker.com/r/immortalwrt/imagebuilder/tags
