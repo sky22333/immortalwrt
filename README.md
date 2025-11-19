@@ -1,4 +1,4 @@
-### immortalwrt的Docker构建脚本
+### immortalwrt构建脚本（使用Docker构建）
 
 - 初始化脚本修改：[`files/etc/uci-defaults/99-custom.sh`](files/etc/uci-defaults/99-custom.sh)
 - 内置软件包修改：[`build.sh`](build.sh)
