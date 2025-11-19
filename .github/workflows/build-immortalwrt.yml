@@ -36,7 +36,10 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: ImmortalWrt 自动构建
+          name: ImmortalWrt 固件包
+          body: |
+            ### 加速下载
+            - [Github文件加速](https://yishijie.gitlab.io/ziyuan/)
           files: immortalwrt-bin.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
