@@ -6,9 +6,8 @@
 
 - 镜像版本修改：`docker-run.sh`，选择符合自己设备的系统架构。
 
-根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前路径`bin`目录。或者修改后运行工作流在线编译。
+根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前路径`bin`目录。或者修改后运行Actions工作流自动编译。
 
-[Github文件加速](https://yishijie.gitlab.io/ziyuan/)
 
 ### 安装istore商店（只支持 x86_64 和 arm64 架构）
 ```
