@@ -1,4 +1,4 @@
-### immortalwrt的docker构建脚本
+### immortalwrt的Docker构建脚本
 
 根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前的`bin`目录。
 
@@ -12,3 +12,5 @@
 ```
 curl -sSL -O https://gh-proxy.com/https://raw.githubusercontent.com/sky22333/immortalwrt/main/sh/istore.sh && chmod +x istore.sh && ./istore.sh
 ```
+
+- [Github文件加速](https://yishijie.gitlab.io/ziyuan/)
