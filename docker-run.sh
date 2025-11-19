@@ -5,7 +5,7 @@ chmod -R 777 bin
 chmod +x build.sh
 chmod +x files/etc/uci-defaults/99-custom.sh
 
-docker run --rm -it \
+docker run --rm -i \
 -v ./bin:/home/build/immortalwrt/bin \
 -v ./files/etc/uci-defaults:/home/build/immortalwrt/files/etc/uci-defaults \
 -v ./build.sh:/home/build/immortalwrt/build.sh \
