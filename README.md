@@ -1,6 +1,6 @@
 ### immortalwrt的Docker构建脚本
 
-根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前的`bin`目录。
+根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前的`bin`目录。或者修改后运行工作流在线编译。
 
 - 初始化脚本修改：`files/etc/uci-defaults/99-custom.sh`
 
