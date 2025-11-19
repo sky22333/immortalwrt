@@ -6,7 +6,7 @@ exec >/tmp/setup.log 2>&1
 ###########################################################
 
 ### 系统后台密码（为空则不修改）
-root_password="root"
+root_password="admin"
 
 ### LAN 的 IPv4 地址（也是后台地址，例如 192.168.2.1）
 lan_ip_address="192.168.56.2"
