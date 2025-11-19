@@ -38,8 +38,9 @@ jobs:
           tag_name: latest
           name: ImmortalWrt 固件包
           body: |
-            ### 加速下载
-            - [Github文件加速](https://yishijie.gitlab.io/ziyuan/)
+            ### 说明
+            - 压缩包内包含所有格式的固件
+            - [Github文件加速下载](https://yishijie.gitlab.io/ziyuan/)
             
           files: immortalwrt-bin.zip
         env:
