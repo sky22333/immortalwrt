@@ -11,13 +11,6 @@ jobs:
       - name: 检出仓库代码
         uses: actions/checkout@v4
 
-      - name: 检查 Docker 环境
-        run: |
-          echo "检查 Docker 环境..."
-          docker --version
-          docker info
-          echo "Docker 已准备就绪"
-
       - name: 增加脚本执行权限
         run: chmod +x docker-run.sh
 
