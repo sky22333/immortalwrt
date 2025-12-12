@@ -20,13 +20,11 @@ jobs:
         run: |
           echo "清理前空间:"
           df -hT
-          
-          # 删除预装软件
           docker rmi `docker images -q`
-          sudo rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
-          sudo -E apt-get -y purge azure-cli ghc* zulu* hhvm llvm* firefox google* dotnet* powershell openjdk* php* || true
-          sudo -E apt-get -y autoremove --purge || true
-          sudo -E apt-get clean || true
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
           
           echo "清理后空间:"
           df -hT
