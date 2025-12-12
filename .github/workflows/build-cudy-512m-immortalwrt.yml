@@ -1,4 +1,4 @@
-name: 编译 ImmortalWrt v24.10.4 - cudy_tr3000-v1
+name: Build ImmortalWrt - cudy_tr3000-v1
 
 on:
   workflow_dispatch:
