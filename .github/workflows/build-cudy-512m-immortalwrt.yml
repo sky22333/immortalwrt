@@ -1,0 +1,234 @@
+name: 编译 ImmortalWrt v24.10.4 - cudy_tr3000-v1 (512MB大分区)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      DL_DIR: ${{ github.workspace }}/immortalwrt/downloads
+    
+    steps:
+      # =============================
+      # 1. 安装依赖
+      # =============================
+      - name: 安装依赖
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential libncurses5-dev gawk git gettext unzip file \
+            libssl-dev wget ccache python3-distutils subversion rsync
+      
+      # =============================
+      # 2. 缓存 ccache
+      # =============================
+      - name: 缓存 ccache
+        uses: actions/cache@v3
+        with:
+          path: .ccache
+          key: ${{ runner.os }}-ccache-512mb
+      
+      # =============================
+      # 3. 缓存 downloads 和 build_dir
+      # =============================
+      - name: 缓存 downloads 和 build_dir
+        uses: actions/cache@v3
+        with:
+          path: |
+            immortalwrt/downloads
+            immortalwrt/build_dir
+          key: ${{ runner.os }}-immortalwrt-512mb-v2
+      
+      # =============================
+      # 4. 克隆 ImmortalWrt v24.10.4 源码
+      # =============================
+      - name: 克隆源码 v24.10.4
+        run: |
+          git clone -b v24.10.4 https://github.com/immortalwrt/immortalwrt.git immortalwrt
+          cd immortalwrt
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+      
+      # =============================
+      # 5. 修改 DTS 设备树文件 (关键步骤)
+      # =============================
+      - name: 修改 DTS 分区表为 512MB
+        run: |
+          cd immortalwrt
+          
+          # 查找 cudy_tr3000-v1 的 DTS 文件
+          DTS_FILE=$(find target/linux/mediatek -name "*cudy*tr3000*.dts" | head -n 1)
+          
+          if [ -z "$DTS_FILE" ]; then
+            echo "错误: 未找到 DTS 文件"
+            exit 1
+          fi
+          
+          echo "找到 DTS 文件: $DTS_FILE"
+          
+          # 备份原文件
+          cp "$DTS_FILE" "${DTS_FILE}.bak"
+          
+          echo "===== 原始分区配置 ====="
+          grep -A 5 "partition@5c0000" "$DTS_FILE"
+          
+          # 修改 ubi 分区大小为 512MB
+          # 注意: 必须与你的 U-Boot 配置匹配!
+          # 
+          # 选项1: 如果你的 U-Boot 支持完整 512MB (推荐)
+          # 起始: 0x5C0000 (约6MB), 大小: 0x1FA40000 (约506MB)
+          sed -i 's/reg = <0x5c0000 0x[0-9a-fA-F]*>;/reg = <0x5C0000 0x1FA40000>;/' "$DTS_FILE"
+          
+          # 选项2: 如果使用暗云的 U-Boot (112MB 版本)
+          # 取消下面这行的注释,并注释掉上面的 sed 命令
+          # sed -i 's/reg = <0x5c0000 0x[0-9a-fA-F]*>;/reg = <0x5C0000 0x7000000>;/' "$DTS_FILE"
+          
+          echo ""
+          echo "===== 修改后的分区配置 ====="
+          grep -A 5 "partition@5c0000" "$DTS_FILE"
+          
+          # 验证修改
+          if grep -q "0x1FA40000\|0x7000000\|0x20000000" "$DTS_FILE"; then
+            echo "✓ DTS 分区已成功修改"
+          else
+            echo "⚠ 警告: 分区修改可能未生效"
+            exit 1
+          fi
+      
+      # =============================
+      # 6. 配置编译目标
+      # =============================
+      - name: 配置编译目标
+        run: |
+          cd immortalwrt
+          
+          # 生成默认配置
+          cat > .config <<EOF
+          CONFIG_TARGET_mediatek=y
+          CONFIG_TARGET_mediatek_filogic=y
+          CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y
+          EOF
+          
+          # 应用默认配置
+          make defconfig
+          
+          echo "===== 当前编译配置 ====="
+          grep "CONFIG_TARGET" .config | grep -v "^#"
+      
+      # =============================
+      # 7. 显示配置信息
+      # =============================
+      - name: 显示配置信息
+        run: |
+          cd immortalwrt
+          
+          echo "===== 设备树文件路径 ====="
+          find target/linux/mediatek -name "*cudy*tr3000*.dts"
+          
+          echo ""
+          echo "===== DTS 分区布局 ====="
+          DTS_FILE=$(find target/linux/mediatek -name "*cudy*tr3000*.dts" | head -n 1)
+          if [ -f "$DTS_FILE" ]; then
+            grep -A 50 "partitions {" "$DTS_FILE" || echo "未找到分区定义"
+          fi
+      
+      # =============================
+      # 8. 下载依赖
+      # =============================
+      - name: 下载依赖包
+        run: |
+          cd immortalwrt
+          make download -j8 || make download -j1 V=s
+      
+      # =============================
+      # 9. 编译固件
+      # =============================
+      - name: 编译固件 (多线程)
+        run: |
+          cd immortalwrt
+          
+          echo "开始编译 512MB 大分区固件..."
+          echo "编译时间: $(date)"
+          
+          # 多线程编译
+          make -j$(($(nproc) + 1)) V=w || make -j1 V=s
+          
+          echo "编译完成: $(date)"
+      
+      # =============================
+      # 10. 检查编译产物
+      # =============================
+      - name: 检查编译产物
+        run: |
+          cd immortalwrt
+          
+          echo "===== 编译产物 ====="
+          ls -lh bin/targets/mediatek/filogic/ || echo "未找到编译产物"
+          
+          # 显示固件大小
+          if [ -f bin/targets/mediatek/filogic/*sysupgrade*.bin ]; then
+            echo ""
+            echo "===== 固件大小 ====="
+            du -h bin/targets/mediatek/filogic/*sysupgrade*.bin
+          fi
+      
+      # =============================
+      # 11. 上传固件
+      # =============================
+      - name: 上传固件到 Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: cudy_tr3000-v1-512mb-firmware
+          path: |
+            immortalwrt/bin/targets/mediatek/filogic/*sysupgrade*.bin
+            immortalwrt/bin/targets/mediatek/filogic/*factory*.bin
+            immortalwrt/bin/targets/mediatek/filogic/sha256sums
+      
+      # =============================
+      # 12. 创建 Release
+      # =============================
+      - name: 发布 Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: immortalwrt/bin/targets/mediatek/filogic/*sysupgrade*.bin
+          tag: 'v512mb-${{ github.run_id }}'
+          name: 'Cudy TR3000-v1 512MB 大分区固件 (ImmortalWrt v24.10.4)'
+          body: |
+            ## ⚠️ 重要警告
+            
+            **此固件仅适用于已硬件改装为 512MB 闪存的设备!**
+            
+            **刷机前必须完成以下步骤:**
+            1. ✅ 已将闪存硬件改装为 512MB
+            2. ✅ 已刷入支持大分区的第三方 U-Boot (如暗云大佬提供的版本)
+            3. ✅ 已备份原厂 FIP 分区
+            
+            **如果没有完成上述步骤,刷入此固件会导致设备无法启动!**
+            
+            ---
+            
+            ## 固件信息
+            - 设备: Cudy TR3000-v1
+            - 闪存: 512MB (硬件改装版)
+            - 系统: ImmortalWrt v24.10.4
+            - 分区大小: 约 506MB 可用空间
+            - 编译时间: ${{ github.event.head_commit.timestamp }}
+            - 构建编号: ${{ github.run_id }}
+            
+            ## 刷机步骤
+            1. 确认已安装支持 512MB 的 U-Boot
+            2. 通过 LuCI 界面上传固件
+            3. **取消勾选"保留配置"**
+            4. 刷入并重启
+            
+            ## 参考教程
+            完整教程请参考: https://www.regecc.net/cudy-tr3000-openwrt-build-firmware-expand-storage-zh/
+            
+            ## 风险提示
+            - 刷机有风险,操作需谨慎
+            - 建议提前备份重要数据
+            - 如出现问题,可恢复原厂 FIP 分区
+          draft: false
+          prerelease: false
