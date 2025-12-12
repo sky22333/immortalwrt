@@ -107,7 +107,7 @@ jobs:
           fi
       
       # =============================
-      # 6. 修改 Makefile (关键步骤!)
+      # 6. 修改 Makefile
       # =============================
       - name: 修改 Makefile 分区参数
         run: |
@@ -244,7 +244,7 @@ jobs:
         with:
           artifacts: immortalwrt/bin/targets/mediatek/filogic/*sysupgrade*.bin
           tag: 'v512mb-${{ github.run_id }}'
-          name: 'Cudy TR3000-v1 512MB 大分区固件 (ImmortalWrt v24.10.4)'
+          name: 'Cudy TR3000-v1 512MB 大分区固件'
           body: |
             ## ⚠️ 重要警告
             
@@ -252,7 +252,7 @@ jobs:
             
             **刷机前必须完成以下步骤:**
             1. ✅ 已将闪存硬件改装为 512MB
-            2. ✅ 已刷入支持大分区的第三方 U-Boot (如暗云大佬提供的版本)
+            2. ✅ 已刷入支持大分区的第三方 U-Boot
             3. ✅ 已备份原厂 FIP 分区
             
             **如果没有完成上述步骤,刷入此固件会导致设备无法启动!**
@@ -278,8 +278,8 @@ jobs:
             3. **取消勾选"保留配置"**
             4. 刷入并重启
             
-            ## 参考教程
-            完整教程请参考: https://www.regecc.net/cudy-tr3000-openwrt-build-firmware-expand-storage-zh/
+            ## 参考文章
+            [参考文章链接](https://www.regecc.net/cudy-tr3000-openwrt-build-firmware-expand-storage-zh/)
             
             ## 风险提示
             - 刷机有风险,操作需谨慎
