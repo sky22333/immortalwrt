@@ -53,7 +53,7 @@ jobs:
       # =============================
       - name: 克隆源码 v24.10.4
         run: |
-          git clone -b v24.10.4 https://github.com/immortalwrt/immortalwrt.git immortalwrt
+          git clone -b v24.10.4 --single-branch --filter=blob:none https://github.com/immortalwrt/immortalwrt
           cd immortalwrt
           ./scripts/feeds update -a
           ./scripts/feeds install -a
