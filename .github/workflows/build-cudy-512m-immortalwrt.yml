@@ -1,4 +1,4 @@
-name: 编译 ImmortalWrt v24.10.4 - cudy_tr3000-v1 (512MB大分区)
+name: 编译 ImmortalWrt v24.10.4 - cudy_tr3000-v1
 
 on:
   workflow_dispatch:
@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-22.04
+    permissions:
+      contents: write
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       DL_DIR: ${{ github.workspace }}/immortalwrt/downloads
