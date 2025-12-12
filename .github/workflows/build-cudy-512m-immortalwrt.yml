@@ -5,7 +5,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     env:
       CCACHE_DIR: ${{ github.workspace }}/.ccache
       DL_DIR: ${{ github.workspace }}/immortalwrt/downloads
@@ -16,10 +16,17 @@ jobs:
       # =============================
       - name: 安装依赖
         run: |
-          sudo apt update
+          sudo apt update -y
+          sudo apt full-upgrade -y
           sudo apt install -y \
-            build-essential libncurses5-dev gawk git gettext unzip file \
-            libssl-dev wget ccache python3-distutils subversion rsync
+            ack antlr3 asciidoc autoconf automake autopoint binutils bison build-essential \
+            bzip2 ccache clang cmake cpio curl device-tree-compiler ecj fastjar flex gawk gettext \
+            gcc-multilib g++-multilib git gperf haveged help2man intltool libc6-dev-i386 libelf-dev \
+            libglib2.0-dev libgmp-dev libltdl-dev libmpc-dev libmpfr-dev libncurses-dev libpython3-dev \
+            libreadline-dev libssl-dev libtool libyaml-dev lld llvm lrzsz genisoimage \
+            ninja-build p7zip-full patch pkgconf python3 python3-pip python3-ply python3-docutils \
+            python3-pyelftools qemu-utils re2c rsync scons squashfs-tools subversion swig texinfo \
+            uglifyjs unzip wget xmlto xxd zlib1g-dev upx zstd
       
       # =============================
       # 2. 缓存 ccache
