@@ -25,7 +25,7 @@ jobs:
       # 2. 缓存 ccache
       # =============================
       - name: 缓存 ccache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: .ccache
           key: ${{ runner.os }}-ccache-512mb
@@ -34,7 +34,7 @@ jobs:
       # 3. 缓存 downloads 和 build_dir
       # =============================
       - name: 缓存 downloads 和 build_dir
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             immortalwrt/downloads
@@ -150,12 +150,14 @@ jobs:
           cd immortalwrt
           
           echo "开始编译 512MB 大分区固件..."
-          echo "编译时间: $(date)"
+          echo "CPU 核心数: $(nproc)"
+          echo "编译开始时间: $(date)"
           
-          # 多线程编译
+          # 第一次尝试: 多线程静默编译 (最快)
+          # 如果失败,则用单线程详细输出重试 (便于调试)
           make -j$(($(nproc) + 1)) V=w || make -j1 V=s
           
-          echo "编译完成: $(date)"
+          echo "编译完成时间: $(date)"
       
       # =============================
       # 10. 检查编译产物
@@ -178,7 +180,7 @@ jobs:
       # 11. 上传固件
       # =============================
       - name: 上传固件到 Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cudy_tr3000-v1-512mb-firmware
           path: |
