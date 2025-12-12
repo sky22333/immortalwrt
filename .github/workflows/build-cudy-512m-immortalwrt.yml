@@ -46,7 +46,7 @@ jobs:
           path: |
             immortalwrt/downloads
             immortalwrt/build_dir
-          key: ${{ runner.os }}-immortalwrt-512mb-v2
+          key: ${{ runner.os }}-immortalwrt-512mb-v3
       
       # =============================
       # 4. 克隆 ImmortalWrt v24.10.4 源码
@@ -59,53 +59,98 @@ jobs:
           ./scripts/feeds install -a
       
       # =============================
-      # 5. 修改 DTS 设备树文件 (关键步骤)
+      # 5. 修改 DTSI 文件添加 reg 属性
       # =============================
-      - name: 修改 DTS 分区表为 512MB
+      - name: 修改 DTSI 文件分区大小
         run: |
           cd immortalwrt
           
-          # 查找 cudy_tr3000-v1 的 DTS 文件
-          DTS_FILE=$(find target/linux/mediatek -name "*cudy*tr3000*.dts" | head -n 1)
+          DTSI_FILE="target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dtsi"
           
-          if [ -z "$DTS_FILE" ]; then
-            echo "错误: 未找到 DTS 文件"
+          if [ ! -f "$DTSI_FILE" ]; then
+            echo "错误: 未找到 DTSI 文件"
             exit 1
           fi
           
-          echo "找到 DTS 文件: $DTS_FILE"
+          echo "找到 DTSI 文件: $DTSI_FILE"
+          cp "$DTSI_FILE" "${DTSI_FILE}.bak"
           
-          # 备份原文件
-          cp "$DTS_FILE" "${DTS_FILE}.bak"
+          echo "===== 原始 ubi 分区定义 ====="
+          grep -B 1 -A 3 "ubi: partition@5c0000" "$DTSI_FILE"
           
-          echo "===== 原始分区配置 ====="
-          grep -A 5 "partition@5c0000" "$DTS_FILE"
+          # 修改 ubi 分区，添加 reg 属性
+          # 512MB 版本: reg = <0x5C0000 0x1FA40000>; (约 506MB)
+          # 起始地址 0x5C0000 = 6MB (BL2+env+Factory+bdinfo+FIP)
+          # 大小 0x1FA40000 = 512MB - 6MB ≈ 506MB
           
-          # 修改 ubi 分区大小为 512MB
-          # 注意: 必须与你的 U-Boot 配置匹配!
-          # 
-          # 选项1: 如果你的 U-Boot 支持完整 512MB (推荐)
-          # 起始: 0x5C0000 (约6MB), 大小: 0x1FA40000 (约506MB)
-          sed -i 's/reg = <0x5c0000 0x[0-9a-fA-F]*>;/reg = <0x5C0000 0x1FA40000>;/' "$DTS_FILE"
+          sed -i '/ubi: partition@5c0000 {/a\				reg = <0x5C0000 0x1FA40000>;' "$DTSI_FILE"
           
-          # 选项2: 如果使用暗云的 U-Boot (112MB 版本)
-          # 取消下面这行的注释,并注释掉上面的 sed 命令
-          # sed -i 's/reg = <0x5c0000 0x[0-9a-fA-F]*>;/reg = <0x5C0000 0x7000000>;/' "$DTS_FILE"
+          # 如果使用 112MB U-Boot，用这个:
+          # sed -i '/ubi: partition@5c0000 {/a\				reg = <0x5C0000 0x7000000>;' "$DTSI_FILE"
           
           echo ""
-          echo "===== 修改后的分区配置 ====="
-          grep -A 5 "partition@5c0000" "$DTS_FILE"
+          echo "===== 修改后的 ubi 分区定义 ====="
+          grep -B 1 -A 4 "ubi: partition@5c0000" "$DTSI_FILE"
           
           # 验证修改
-          if grep -q "0x1FA40000\|0x7000000\|0x20000000" "$DTS_FILE"; then
-            echo "✓ DTS 分区已成功修改"
+          if grep -q "reg = <0x5C0000 0x1FA40000>" "$DTSI_FILE"; then
+            echo ""
+            echo "✓ DTSI 已成功添加 512MB 分区定义 (0x1FA40000)"
+          elif grep -q "reg = <0x5C0000 0x7000000>" "$DTSI_FILE"; then
+            echo ""
+            echo "✓ DTSI 已成功添加 112MB 分区定义 (0x7000000)"
           else
-            echo "⚠ 警告: 分区修改可能未生效"
+            echo ""
+            echo "⚠ 警告: DTSI 分区修改可能未生效"
+            cat "$DTSI_FILE"
             exit 1
           fi
       
       # =============================
-      # 6. 配置编译目标
+      # 6. 修改 Makefile (关键步骤!)
+      # =============================
+      - name: 修改 Makefile 分区参数
+        run: |
+          cd immortalwrt
+          
+          MAKEFILE="target/linux/mediatek/image/filogic.mk"
+          
+          if [ ! -f "$MAKEFILE" ]; then
+            echo "错误: 未找到 Makefile"
+            exit 1
+          fi
+          
+          echo "找到 Makefile: $MAKEFILE"
+          cp "$MAKEFILE" "${MAKEFILE}.bak"
+          
+          echo "===== 原始 cudy_tr3000-v1 配置 ====="
+          sed -n '/^define Device\/cudy_tr3000-v1$/,/^endef$/p' "$MAKEFILE"
+          
+          # 修改 IMAGE_SIZE 为 512MB (约 500MB 可用)
+          # 65536k (64MB) -> 512000k (约 500MB)
+          sed -i '/^define Device\/cudy_tr3000-v1$/,/^endef$/{
+            s/IMAGE_SIZE := 65536k/IMAGE_SIZE := 512000k/
+          }' "$MAKEFILE"
+          
+          # 如果使用 112MB U-Boot，用这个值:
+          # sed -i '/^define Device\/cudy_tr3000-v1$/,/^endef$/{ s/IMAGE_SIZE := 65536k/IMAGE_SIZE := 112000k/ }' "$MAKEFILE"
+          
+          echo ""
+          echo "===== 修改后的 cudy_tr3000-v1 配置 ====="
+          sed -n '/^define Device\/cudy_tr3000-v1$/,/^endef$/p' "$MAKEFILE"
+          
+          # 验证修改
+          if grep -q "IMAGE_SIZE := 512000k" "$MAKEFILE"; then
+            echo ""
+            echo "✓ Makefile IMAGE_SIZE 已成功修改为 512MB"
+          else
+            echo ""
+            echo "⚠ 警告: IMAGE_SIZE 修改可能未生效"
+            exit 1
+          fi
+      
+      # =============================
+      # 7. 配置编译目标
       # =============================
       - name: 配置编译目标
         run: |
@@ -116,33 +161,31 @@ jobs:
           CONFIG_TARGET_mediatek=y
           CONFIG_TARGET_mediatek_filogic=y
           CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y
+          CONFIG_TARGET_ROOTFS_PARTSIZE=500
           EOF
           
           # 应用默认配置
           make defconfig
           
           echo "===== 当前编译配置 ====="
-          grep "CONFIG_TARGET" .config | grep -v "^#"
+          grep "CONFIG_TARGET\|PARTSIZE" .config | grep -v "^#"
       
       # =============================
-      # 7. 显示配置信息
+      # 8. 显示配置信息
       # =============================
       - name: 显示配置信息
         run: |
           cd immortalwrt
           
-          echo "===== 设备树文件路径 ====="
-          find target/linux/mediatek -name "*cudy*tr3000*.dts"
+          echo "===== DTSI 文件路径 ====="
+          find target/linux/mediatek/dts -name "*cudy*tr3000*.dtsi"
           
           echo ""
-          echo "===== DTS 分区布局 ====="
-          DTS_FILE=$(find target/linux/mediatek -name "*cudy*tr3000*.dts" | head -n 1)
-          if [ -f "$DTS_FILE" ]; then
-            grep -A 50 "partitions {" "$DTS_FILE" || echo "未找到分区定义"
-          fi
+          echo "===== DTSI 分区布局 ====="
+          cat target/linux/mediatek/dts/mt7981b-cudy-tr3000-v1.dtsi
       
       # =============================
-      # 8. 下载依赖
+      # 9. 下载依赖
       # =============================
       - name: 下载依赖包
         run: |
@@ -150,7 +193,7 @@ jobs:
           make download -j8 || make download -j1 V=s
       
       # =============================
-      # 9. 编译固件
+      # 10. 编译固件
       # =============================
       - name: 编译固件 (多线程)
         run: |
@@ -167,24 +210,22 @@ jobs:
           echo "编译完成时间: $(date)"
       
       # =============================
-      # 10. 检查编译产物
+      # 11. 检查编译产物
       # =============================
       - name: 检查编译产物
         run: |
           cd immortalwrt
           
-          echo "===== 编译产物 ====="
+          echo "===== 编译产物列表 ====="
           ls -lh bin/targets/mediatek/filogic/ || echo "未找到编译产物"
           
           # 显示固件大小
-          if [ -f bin/targets/mediatek/filogic/*sysupgrade*.bin ]; then
-            echo ""
-            echo "===== 固件大小 ====="
-            du -h bin/targets/mediatek/filogic/*sysupgrade*.bin
-          fi
+          echo ""
+          echo "===== 固件文件详情 ====="
+          find bin/targets/mediatek/filogic/ -name "*.bin" -exec ls -lh {} \;
       
       # =============================
-      # 11. 上传固件
+      # 12. 上传固件
       # =============================
       - name: 上传固件到 Artifact
         uses: actions/upload-artifact@v4
@@ -196,7 +237,7 @@ jobs:
             immortalwrt/bin/targets/mediatek/filogic/sha256sums
       
       # =============================
-      # 12. 创建 Release
+      # 13. 创建 Release
       # =============================
       - name: 发布 Release
         uses: ncipollo/release-action@v1
@@ -222,9 +263,14 @@ jobs:
             - 设备: Cudy TR3000-v1
             - 闪存: 512MB (硬件改装版)
             - 系统: ImmortalWrt v24.10.4
-            - 分区大小: 约 506MB 可用空间
+            - 分区大小: 约 506MB 可用空间 (0x1FA40000)
             - 编译时间: ${{ github.event.head_commit.timestamp }}
             - 构建编号: ${{ github.run_id }}
+            
+            ## 修改说明
+            - DTSI: 添加 `reg = <0x5C0000 0x1FA40000>` 到 ubi 分区
+            - 起始地址: 0x5C0000 (约 6MB)
+            - 分区大小: 0x1FA40000 (约 506MB)
             
             ## 刷机步骤
             1. 确认已安装支持 512MB 的 U-Boot
