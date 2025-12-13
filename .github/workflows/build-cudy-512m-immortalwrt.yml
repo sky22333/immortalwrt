@@ -295,18 +295,8 @@ jobs:
             - 起始地址: 0x5C0000 (约 6MB)
             - 分区大小: 0x1FA40000 (约 506MB)
             
-            ## 刷机步骤
-            1. 确认已安装支持 512MB 的 U-Boot
-            2. 通过 LuCI 界面上传固件
-            3. **取消勾选"保留配置"**
-            4. 刷入并重启
-            
-            ## 参考文章
+            ### 参考文章
             [参考文章链接](https://www.regecc.net/cudy-tr3000-openwrt-build-firmware-expand-storage-zh/)
             
-            ## 风险提示
-            - 刷机有风险,操作需谨慎
-            - 建议提前备份重要数据
-            - 如出现问题,可恢复原厂 FIP 分区
           draft: false
           prerelease: false
