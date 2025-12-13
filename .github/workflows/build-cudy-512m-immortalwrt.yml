@@ -287,8 +287,6 @@ jobs:
             - 闪存: 512MB (硬件改装版)
             - 系统: ImmortalWrt v24.10.4
             - 分区大小: 约 506MB 可用空间 (0x1FA40000)
-            - 编译时间: ${{ github.event.head_commit.timestamp }}
-            - 构建编号: ${{ github.run_id }}
             
             ## 修改说明
             - DTSI: 添加 `reg = <0x5C0000 0x1FA40000>` 到 ubi 分区
