@@ -1,2 +1,2 @@
-- cudy_tr3000-v1的uboot固件-支持硬改512M大分区
-- py脚本为uboot固件分区分析脚本
+- `cudy_tr3000-v1`的`uboot`固件-支持硬改512M大分区
+- py脚本为`uboot`固件分区分析脚本
