@@ -9,7 +9,7 @@ exec >/tmp/setup.log 2>&1
 root_password="admin"
 
 ### LAN 的 IPv4 地址（也是后台地址，例如 192.168.2.1）
-lan_ip_address="192.168.56.2"
+lan_ip_address="192.168.2.1"
 
 ### LAN 的子网掩码（例如 255.255.255.0）
 # lan_netmask="255.255.255.0"
