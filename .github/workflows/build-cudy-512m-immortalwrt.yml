@@ -95,26 +95,20 @@ jobs:
           grep -B 1 -A 3 "ubi: partition@5c0000" "$DTSI_FILE"
           
           # 修改 ubi 分区，添加 reg 属性
-          # 512MB 版本: reg = <0x5C0000 0x1FA40000>; (约 506MB)
+          # 512MB 闪存实际可用分区 (layout@3): reg = <0x5C0000 0x1EA00000>; (490MB)
           # 起始地址 0x5C0000 = 6MB (BL2+env+Factory+bdinfo+FIP)
-          # 大小 0x1FA40000 = 512MB - 6MB ≈ 506MB
+          # 大小 0x1EA00000 = 490MB
           
-          sed -i '/ubi: partition@5c0000 {/a\				reg = <0x5C0000 0x1FA40000>;' "$DTSI_FILE"
-          
-          # 如果使用 112MB U-Boot，用这个:
-          # sed -i '/ubi: partition@5c0000 {/a\				reg = <0x5C0000 0x7000000>;' "$DTSI_FILE"
+          sed -i '/ubi: partition@5c0000 {/a\				reg = <0x5C0000 0x1EA00000>;' "$DTSI_FILE"
           
           echo ""
           echo "===== 修改后的 ubi 分区定义 ====="
           grep -B 1 -A 4 "ubi: partition@5c0000" "$DTSI_FILE"
           
           # 验证修改
-          if grep -q "reg = <0x5C0000 0x1FA40000>" "$DTSI_FILE"; then
+          if grep -q "reg = <0x5C0000 0x1EA00000>" "$DTSI_FILE"; then
             echo ""
-            echo "✓ DTSI 已成功添加 512MB 分区定义 (0x1FA40000)"
-          elif grep -q "reg = <0x5C0000 0x7000000>" "$DTSI_FILE"; then
-            echo ""
-            echo "✓ DTSI 已成功添加 112MB 分区定义 (0x7000000)"
+            echo "✓ DTSI 已成功添加 490MB 分区定义 (0x1EA00000)"
           else
             echo ""
             echo "⚠ 警告: DTSI 分区修改可能未生效"
@@ -142,23 +136,20 @@ jobs:
           echo "===== 原始 cudy_tr3000-v1 配置 ====="
           sed -n '/^define Device\/cudy_tr3000-v1$/,/^endef$/p' "$MAKEFILE"
           
-          # 修改 IMAGE_SIZE 为 512MB (约 500MB 可用)
-          # 65536k (64MB) -> 512000k (约 500MB)
+          # 修改 IMAGE_SIZE 为 490MB (适配 layout@3)
+          # 65536k (64MB) -> 501760k (490MB)
           sed -i '/^define Device\/cudy_tr3000-v1$/,/^endef$/{
-            s/IMAGE_SIZE := 65536k/IMAGE_SIZE := 512000k/
+            s/IMAGE_SIZE := 65536k/IMAGE_SIZE := 501760k/
           }' "$MAKEFILE"
-          
-          # 如果使用 112MB U-Boot，用这个值:
-          # sed -i '/^define Device\/cudy_tr3000-v1$/,/^endef$/{ s/IMAGE_SIZE := 65536k/IMAGE_SIZE := 112000k/ }' "$MAKEFILE"
           
           echo ""
           echo "===== 修改后的 cudy_tr3000-v1 配置 ====="
           sed -n '/^define Device\/cudy_tr3000-v1$/,/^endef$/p' "$MAKEFILE"
           
           # 验证修改
-          if grep -q "IMAGE_SIZE := 512000k" "$MAKEFILE"; then
+          if grep -q "IMAGE_SIZE := 501760k" "$MAKEFILE"; then
             echo ""
-            echo "✓ Makefile IMAGE_SIZE 已成功修改为 512MB"
+            echo "✓ Makefile IMAGE_SIZE 已成功修改为 490MB"
           else
             echo ""
             echo "⚠ 警告: IMAGE_SIZE 修改可能未生效"
@@ -177,7 +168,7 @@ jobs:
           CONFIG_TARGET_mediatek=y
           CONFIG_TARGET_mediatek_filogic=y
           CONFIG_TARGET_mediatek_filogic_DEVICE_cudy_tr3000-v1=y
-          CONFIG_TARGET_ROOTFS_PARTSIZE=500
+          CONFIG_TARGET_ROOTFS_PARTSIZE=480
           
           # 额外插件
           CONFIG_PACKAGE_curl=y
@@ -222,7 +213,7 @@ jobs:
         run: |
           cd immortalwrt
           
-          echo "开始编译 512MB 大分区固件..."
+          echo "开始编译 490MB 大分区固件 (适配 512MB 闪存)..."
           echo "CPU 核心数: $(nproc)"
           echo "编译开始时间: $(date)"
           
@@ -267,7 +258,7 @@ jobs:
         with:
           artifacts: immortalwrt/bin/targets/mediatek/filogic/*sysupgrade*.bin
           tag: 'v512mb-${{ github.run_id }}'
-          name: 'Cudy TR3000-v1 512MB 大分区固件'
+          name: 'Cudy TR3000-v1 490MB 大分区固件'
           body: |
             ## ⚠️ 重要警告
             
@@ -275,7 +266,7 @@ jobs:
             
             **刷机前必须完成以下步骤:**
             1. ✅ 已将闪存硬件改装为 512MB
-            2. ✅ 已刷入支持大分区的第三方 U-Boot
+            2. ✅ 已刷入支持大分区的第三方 U-Boot (包含 layout@3 布局)
             3. ✅ 已备份原厂 FIP 分区
             
             **如果没有完成上述步骤,刷入此固件会导致设备无法启动!**
@@ -286,15 +277,12 @@ jobs:
             - 设备: Cudy TR3000-v1
             - 闪存: 512MB (硬件改装版)
             - 系统: ImmortalWrt v24.10.4
-            - 分区大小: 约 506MB 可用空间 (0x1FA40000)
+            - 分区大小: 约 490MB 可用空间 (0x1EA00000)
             
             ## 修改说明
-            - DTSI: 添加 `reg = <0x5C0000 0x1FA40000>` 到 ubi 分区
+            - DTSI: 添加 `reg = <0x5C0000 0x1EA00000>` 到 ubi 分区 (适配 layout@3)
             - 起始地址: 0x5C0000 (约 6MB)
-            - 分区大小: 0x1FA40000 (约 506MB)
-            
-            ### 参考文章
-            [参考文章链接](https://www.regecc.net/cudy-tr3000-openwrt-build-firmware-expand-storage-zh/)
+            - 分区大小: 0x1EA00000 (约 490MB)
             
           draft: false
           prerelease: false
