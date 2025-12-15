@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -p bin
-chmod -R 777 bin
+chmod -R 755 bin
 chmod +x build.sh
 chmod +x files/etc/uci-defaults/99-custom.sh
 
