@@ -2,6 +2,12 @@ name: Build ImmortalWrt
 
 on:
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "版本号"
+        required: true
+        default: ""
+        type: string
 
 jobs:
   build:
