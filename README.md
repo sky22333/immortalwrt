@@ -6,8 +6,16 @@
 
 根据自己情况修改，修改后执行`docker-run.sh`脚本即可自动构建，构建出来的固件在当前路径`bin`目录。或者修改后运行Actions工作流自动编译。
 
+#### 进系统后在线扩容根分区（ImmortalWrt 25.12+ x86/64，ext4 镜像）
 
-#### 安装istore商店（只支持 x86_64 和 arm64 架构）
 ```
-curl -sSL -O https://raw.githubusercontent.com/sky22333/immortalwrt/main/sh/istore.sh && chmod +x istore.sh && ./istore.sh
+apk update
+apk add parted losetup resize2fs blkid curl
+
+curl -fsSL -o expand-root.sh \
+  "https://openwrt.org/_export/code/docs/guide-user/advanced/expand_root?codeblock=0"
+chmod +x expand-root.sh
+. ./expand-root.sh
+
+sh /etc/uci-defaults/70-rootpt-resize
 ```

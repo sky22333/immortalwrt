@@ -9,6 +9,6 @@ docker run --rm -i \
 -v ./bin:/home/build/immortalwrt/bin \
 -v ./files/etc/uci-defaults:/home/build/immortalwrt/files/etc/uci-defaults \
 -v ./build.sh:/home/build/immortalwrt/build.sh \
-immortalwrt/imagebuilder:x86-64-openwrt-24.10.4 /home/build/immortalwrt/build.sh
+immortalwrt/imagebuilder:x86-64-openwrt-25.12.0 /home/build/immortalwrt/build.sh
 
 # 查找对应架构的镜像：https://hub.docker.com/r/immortalwrt/imagebuilder/tags
