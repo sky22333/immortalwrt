@@ -40,7 +40,6 @@ jobs:
           body: |
             ### 说明
             - 压缩包内包含所有格式的固件
-            - [Github文件加速下载](https://yishijie.gitlab.io/ziyuan/)
             
           files: immortalwrt-bin.zip
         env:
