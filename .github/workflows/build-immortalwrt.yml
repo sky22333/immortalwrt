@@ -6,7 +6,7 @@ on:
       tag:
         description: "版本号"
         required: true
-        default: "25.12.0"
+        default: "v25.12.0"
         type: string
 
 jobs:
@@ -41,12 +41,16 @@ jobs:
       - name: 上传到 Release
         uses: softprops/action-gh-release@v3
         with:
-          tag_name: latest
-          name: ImmortalWrt 固件包
+          # 使用输入的 tag，如果没输入则 fallback 到 latest
+          tag_name: ${{ github.event.inputs.tag || 'latest' }}
+          name: ImmortalWrt ${{ github.event.inputs.tag }}
           body: |
-            ### 说明
-            - 压缩包内包含所有格式的固件
+            ### ImmortalWrt 固件包
             
+            **构建版本：** `${{ github.event.inputs.tag || 'latest' }}`
+            **构建时间：** ${{ github.event.repository.updated_at }}
+            
+            - 压缩包内包含所有格式的固件
           files: immortalwrt-bin.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
