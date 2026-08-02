@@ -12,7 +12,7 @@
 apk update
 apk add parted losetup resize2fs blkid
 
-wget -U "" -O expand-root.sh "https://openwrt.org/_export/code/docs/guide-user/advanced/expand_root?codeblock=0"
+wget -U "" -O expand-root.sh "https://openwrt.org/_export/code/docs/guide-user/advanced/expand_root?codeblock=1"
 
 . ./expand-root.sh
 
