@@ -1,106 +1,49 @@
+
 #!/bin/sh
-exec >/tmp/setup.log 2>&1
 
-###########################################################
-#                  自 定 义 配 置 区 域
-###########################################################
+# 首次启动配置：取消注释并修改参数即可启用
 
-### 系统后台密码（为空则不修改）
-root_password="admin"
-
-### LAN 的 IPv4 地址（也是后台地址，例如 192.168.2.1）
-lan_ip_address="192.168.2.1"
-
-### LAN 的子网掩码（例如 255.255.255.0）
-# lan_netmask="255.255.255.0"
-
-### LAN 的 IPv4 网关（可为空）
-# lan_gateway="192.168.1.1"
-
-### LAN 的 DNS（多个 DNS 可空格分隔，如 "8.8.8.8 1.1.1.1"）
-# lan_dns="8.8.8.8 223.5.5.5"
-
-### DHCP 是否开启（1=开启，0=关闭）
-# lan_dhcp_enable="1"
-
-### DHCP 起始地址
-# lan_dhcp_start="100"
-
-### DHCP 地址池数量
-# lan_dhcp_limit="150"
-
-### DHCP 租约时间
-# lan_dhcp_leasetime="12h"
-
-### WiFi 名称 SSID（为空则不修改）
+# Wi-Fi
 # wlan_name="ImmortalWrt"
-
-### WiFi 密码（≥ 8 位才生效）
 # wlan_password="12345678"
 
-### PPPoE 宽带账号（为空则跳过）
-# pppoe_username=""
+# 管理员密码（LuCI / SSH）
+# root_password="admin"
 
-### PPPoE 宽带密码
+# LAN IP（25.12+ 使用 CIDR）
+# lan_ip_address="192.168.2.1/24"
+
+# PPPoE 账号和密码
+# pppoe_username=""
 # pppoe_password=""
 
-###########################################################
+exec >/tmp/setup.log 2>&1
 
-# ------------ root 密码 ------------
 if [ -n "$root_password" ]; then
-  (echo "$root_password"; sleep 1; echo "$root_password") | passwd >/dev/null
+  printf '%s\n%s\n' "$root_password" "$root_password" | passwd root >/dev/null || exit 1
 fi
 
-# ------------ LAN 基础配置 ------------
 if [ -n "$lan_ip_address" ]; then
-  uci set network.lan.ipaddr="$lan_ip_address"
+  uci set network.lan.ipaddr="$lan_ip_address" || exit 1
+  uci -q delete network.lan.netmask || :
+  uci commit network || exit 1
 fi
 
-if [ -n "$lan_netmask" ]; then
-  uci set network.lan.netmask="$lan_netmask"
+if [ -n "$wlan_name" ] && [ -n "$wlan_password" ] && [ "${#wlan_password}" -ge 8 ]; then
+  uci set 'wireless.@wifi-device[0].disabled=0' || exit 1
+  uci set 'wireless.@wifi-iface[0].disabled=0' || exit 1
+  uci set 'wireless.@wifi-iface[0].encryption=psk2' || exit 1
+  uci set "wireless.@wifi-iface[0].ssid=$wlan_name" || exit 1
+  uci set "wireless.@wifi-iface[0].key=$wlan_password" || exit 1
+  uci commit wireless || exit 1
 fi
 
-if [ -n "$lan_gateway" ]; then
-  uci set network.lan.gateway="$lan_gateway"
-fi
-
-# DNS
-if [ -n "$lan_dns" ]; then
-  uci delete network.lan.dns 2>/dev/null
-  for d in $lan_dns; do
-    uci add_list network.lan.dns="$d"
-  done
-fi
-
-uci commit network
-
-# ------------ DHCP 设置 ------------
-if [ -n "$lan_dhcp_enable" ]; then
-  uci set dhcp.lan.ignore=$([ "$lan_dhcp_enable" = "1" ] && echo 0 || echo 1)
-fi
-
-[ -n "$lan_dhcp_start" ] && uci set dhcp.lan.start="$lan_dhcp_start"
-[ -n "$lan_dhcp_limit" ] && uci set dhcp.lan.limit="$lan_dhcp_limit"
-[ -n "$lan_dhcp_leasetime" ] && uci set dhcp.lan.leasetime="$lan_dhcp_leasetime"
-
-uci commit dhcp
-
-# ------------ WIFI 配置 ------------
-if [ -n "$wlan_name" ] && [ -n "$wlan_password" ] && [ ${#wlan_password} -ge 8 ]; then
-  uci set wireless.@wifi-device[0].disabled='0'
-  uci set wireless.@wifi-iface[0].disabled='0'
-  uci set wireless.@wifi-iface[0].encryption='psk2'
-  uci set wireless.@wifi-iface[0].ssid="$wlan_name"
-  uci set wireless.@wifi-iface[0].key="$wlan_password"
-  uci commit wireless
-fi
-
-# ------------ PPPoE 宽带拨号 ------------
 if [ -n "$pppoe_username" ] && [ -n "$pppoe_password" ]; then
-  uci set network.wan.proto=pppoe
-  uci set network.wan.username="$pppoe_username"
-  uci set network.wan.password="$pppoe_password"
-  uci commit network
+  uci set network.wan.proto=pppoe || exit 1
+  uci set network.wan.username="$pppoe_username" || exit 1
+  uci set network.wan.password="$pppoe_password" || exit 1
+  uci commit network || exit 1
 fi
 
-echo "All done!"
+echo 'All done!'
+exit 0
