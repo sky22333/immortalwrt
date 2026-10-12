@@ -3,7 +3,7 @@ FROM alpine:latest AS downloader
 RUN apk add --no-cache wget
 
 # ImmortalWrt版本
-ARG IMWRT_VERSION=25.12.0
+ARG IMWRT_VERSION=25.12.2
 ARG TARGETARCH
 
 # 根据TARGETARCH变量自动适配架构
