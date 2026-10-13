@@ -11,4 +11,4 @@ docker run --rm -i \
 -v ./build.sh:/home/build/immortalwrt/build.sh \
 immortalwrt/imagebuilder:x86-64-openwrt-25.12.2 /home/build/immortalwrt/build.sh
 
-# 查找对应架构的镜像：https://hub.docker.com/r/immortalwrt/imagebuilder/tags
+# 查找对应目标平台的镜像：https://hub.docker.com/r/immortalwrt/imagebuilder/tags
