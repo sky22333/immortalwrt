@@ -17,5 +17,5 @@ PACKAGES="$PACKAGES luci-i18n-filemanager-zh-cn"
 
 make image PACKAGES="$PACKAGES" FILES="/home/build/immortalwrt/files" ROOTFS_PARTSIZE="512"
 
-# 通常需要传入路由器型号，例如：PROFILE=friendlyarm_nanopi-r2s
-# 路由器型号id查询地址：https://downloads.immortalwrt.org/releases/25.12.2/.overview.json
+# 通常需要传入路由器型号id，例如：PROFILE=friendlyarm_nanopi-r2s
+# 路由器型号id查询地址：https://downloads.immortalwrt.org/releases/25.12.2/.overview.json，架构看target
